@@ -1,9 +1,9 @@
 
-
-/*#include "SiPotential.h"
+/*
+#include "SiPotential.h"
 
 //-------------------- force between two Si particles ---------------------//
-double f2_derivative_of_rij_tag(double r_ij_tag)
+__host__ __device__ double f2_derivative_of_rij_tag(double r_ij_tag)
 {
 	double first = -4*B_Si*(1.0/(r_ij_tag*r_ij_tag*r_ij_tag*r_ij_tag*r_ij_tag));
 	double second = ((B_Si*(1.0/(r_ij_tag*r_ij_tag*r_ij_tag*r_ij_tag)))-1)*(1.0/((r_ij_tag-a_Si)*(r_ij_tag-a_Si)));
@@ -32,7 +32,7 @@ double f2_derivative_of_rij_tag(double r_ij_tag)
 	return A_Si*exponent*(f2_derivative_part_1 - f2_derivative_part_2);
 }
 
-double v2_derivative_of_rix(real3 i, real3 j, double r_ij)
+__host__ __device__ double v2_derivative_of_rix(real3 i, real3 j, double r_ij)
 {
 	if(r_ij/sigma_Si == pow(2.0,1.0/6.0))
 	{
@@ -50,7 +50,7 @@ double v2_derivative_of_rix(real3 i, real3 j, double r_ij)
 	return v2_derivative;
 }
 
-double v2_derivative_of_riy(real3 i, real3 j, double r_ij)
+__host__ __device__ double v2_derivative_of_riy(real3 i, real3 j, double r_ij)
 {
 	if(r_ij/sigma_Si == pow(2.0,1.0/6.0))
 	{
@@ -68,7 +68,7 @@ double v2_derivative_of_riy(real3 i, real3 j, double r_ij)
 	return v2_derivative;
 }
 
-double v2_derivative_of_riz(real3 i, real3 j, double r_ij)
+__host__ __device__ double v2_derivative_of_riz(real3 i, real3 j, double r_ij)
 {
 	if(r_ij/sigma_Si == pow(2.0,1.0/6.0))
 	{
@@ -88,7 +88,7 @@ double v2_derivative_of_riz(real3 i, real3 j, double r_ij)
 //----------------------------------------------------------------------------//
 
 //-------------------- potential between two Si particles ---------------------//
-double f2(double r_ij_tag)
+__host__ __device__ double f2(double r_ij_tag)
 {
 	if(r_ij_tag >= a_Si)
 	{
@@ -108,7 +108,7 @@ double f2(double r_ij_tag)
 	return A_Si*expression*exponent;
 }
 
-double v2(double r_ij_tag)
+__host__ __device__ double v2(double r_ij_tag)
 {
 	if(r_ij_tag == pow(2.0,1.0/6.0))
 	{
@@ -119,7 +119,7 @@ double v2(double r_ij_tag)
 //----------------------------------------------------------------------------//
 
 //------------------------ force between three Si particles -------------------//
-double hi_derivative_of_rij_tag(double r_ij_tag, double r_ik_tag, double r_jk_tag)
+__host__ __device__ double hi_derivative_of_rij_tag(double r_ij_tag, double r_ik_tag, double r_jk_tag)
 {
 	double cosJik_plus_oneThird = ((r_ij_tag*r_ij_tag + r_ik_tag*r_ik_tag - r_jk_tag*r_jk_tag)/(2.0 * r_ij_tag * r_ik_tag)) + (1.0/3.0);
 
@@ -138,7 +138,7 @@ double hi_derivative_of_rij_tag(double r_ij_tag, double r_ik_tag, double r_jk_ta
 	return lamda_Si*exponent*cosJik_plus_oneThird*expression;
 }
 
-double hi_derivative_of_rik_tag(double r_ij_tag, double r_ik_tag, double r_jk_tag)
+__host__ __device__ double hi_derivative_of_rik_tag(double r_ij_tag, double r_ik_tag, double r_jk_tag)
 {
 	double cosJik_plus_oneThird = ((r_ij_tag*r_ij_tag + r_ik_tag*r_ik_tag - r_jk_tag*r_jk_tag)/(2.0 * r_ij_tag * r_ik_tag)) + (1.0/3.0);
 
@@ -157,7 +157,7 @@ double hi_derivative_of_rik_tag(double r_ij_tag, double r_ik_tag, double r_jk_ta
 	return lamda_Si*exponent*cosJik_plus_oneThird*expression;
 }
 
-double hj_derivative_of_rij_tag(double r_ij_tag, double r_ik_tag, double r_jk_tag)
+__host__ __device__ double hj_derivative_of_rij_tag(double r_ij_tag, double r_ik_tag, double r_jk_tag)
 {
 	double cosIjk_plus_oneThird = ((r_ij_tag*r_ij_tag + r_jk_tag*r_jk_tag - r_ik_tag*r_ik_tag)/(2.0 * r_ij_tag * r_jk_tag)) + (1.0/3.0);
 
@@ -176,7 +176,7 @@ double hj_derivative_of_rij_tag(double r_ij_tag, double r_ik_tag, double r_jk_ta
 	return lamda_Si*exponent*cosIjk_plus_oneThird*expression;
 }
 
-double hj_derivative_of_rik_tag(double r_ij_tag, double r_ik_tag, double r_jk_tag)
+__host__ __device__ double hj_derivative_of_rik_tag(double r_ij_tag, double r_ik_tag, double r_jk_tag)
 {
 	double cosIjk_plus_oneThird = ((r_ij_tag*r_ij_tag + r_jk_tag*r_jk_tag - r_ik_tag*r_ik_tag)/(2.0 * r_ij_tag * r_jk_tag)) + (1.0/3.0);
 
@@ -190,7 +190,7 @@ double hj_derivative_of_rik_tag(double r_ij_tag, double r_ik_tag, double r_jk_ta
 	return lamda_Si*exponent*2.0*cosIjk_plus_oneThird*expression;
 }
 
-double hk_derivative_of_rij_tag(double r_ij_tag, double r_ik_tag, double r_jk_tag)
+__host__ __device__ double hk_derivative_of_rij_tag(double r_ij_tag, double r_ik_tag, double r_jk_tag)
 {
 	double cosIkj_plus_oneThird = ((r_ik_tag*r_ik_tag + r_jk_tag*r_jk_tag - r_ij_tag*r_ij_tag)/(2 * r_ik_tag * r_jk_tag)) + (1.0/3.0);
 
@@ -205,7 +205,7 @@ double hk_derivative_of_rij_tag(double r_ij_tag, double r_ik_tag, double r_jk_ta
 	return lamda_Si*exponent*2.0*cosIkj_plus_oneThird*expression;
 }
 
-double hk_derivative_of_rik_tag(double r_ij_tag, double r_ik_tag, double r_jk_tag)
+__host__ __device__ double hk_derivative_of_rik_tag(double r_ij_tag, double r_ik_tag, double r_jk_tag)
 {
 	double cosIkj_plus_oneThird = ((r_ik_tag*r_ik_tag + r_jk_tag*r_jk_tag - r_ij_tag*r_ij_tag)/(2.0 * r_ik_tag * r_jk_tag)) + (1.0/3.0);
 
@@ -224,7 +224,7 @@ double hk_derivative_of_rik_tag(double r_ij_tag, double r_ik_tag, double r_jk_ta
 	return lamda_Si*exponent*cosIkj_plus_oneThird*expression;
 }
 
-double f3_derivative_of_rij_tag(double r_ij_tag, double r_ik_tag, double r_jk_tag)
+__host__ __device__ double f3_derivative_of_rij_tag(double r_ij_tag, double r_ik_tag, double r_jk_tag)
 {
 	double hi_derivative_of_rij = 0.0;
 	double hj_derivative_of_rij = 0.0;
@@ -245,7 +245,7 @@ double f3_derivative_of_rij_tag(double r_ij_tag, double r_ik_tag, double r_jk_ta
 	return hi_derivative_of_rij + hj_derivative_of_rij + hk_derivative_of_rij;
 }
 
-double f3_derivative_of_rik_tag(double r_ij_tag, double r_ik_tag, double r_jk_tag)
+__host__ __device__ double f3_derivative_of_rik_tag(double r_ij_tag, double r_ik_tag, double r_jk_tag)
 {
 	double hi_derivative_of_rik = 0.0;
 	double hj_derivative_of_rik = 0.0;
@@ -266,7 +266,7 @@ double f3_derivative_of_rik_tag(double r_ij_tag, double r_ik_tag, double r_jk_ta
 	return hi_derivative_of_rik + hj_derivative_of_rik + hk_derivative_of_rik;
 }
 
-double v3_derivative_of_rix(real3 i, real3 j, real3 k, double r_ij, double r_ik, double r_jk)
+__host__ __device__ double v3_derivative_of_rix(real3 i, real3 j, real3 k, double r_ij, double r_ik, double r_jk)
 {
 	double v3_derived_by_rij = (f3_derivative_of_rij_tag(r_ij/sigma_Si, r_ik/sigma_Si, r_jk/sigma_Si))*(epsilon_Si/sigma_Si);
 	double v3_derived_by_rik = (f3_derivative_of_rik_tag(r_ij/sigma_Si, r_ik/sigma_Si, r_jk/sigma_Si))*(epsilon_Si/sigma_Si);
@@ -279,7 +279,7 @@ double v3_derivative_of_rix(real3 i, real3 j, real3 k, double r_ij, double r_ik,
 	return v3_derived_by_rij*expression1 + v3_derived_by_rik*expression2;
 }
 
-double v3_derivative_of_riy(real3 i, real3 j, real3 k, double r_ij, double r_ik, double r_jk)
+__host__ __device__ double v3_derivative_of_riy(real3 i, real3 j, real3 k, double r_ij, double r_ik, double r_jk)
 {
 	double v3_derived_by_rij = (f3_derivative_of_rij_tag(r_ij/sigma_Si, r_ik/sigma_Si, r_jk/sigma_Si))*(epsilon_Si/sigma_Si);
 	double v3_derived_by_rik = (f3_derivative_of_rik_tag(r_ij/sigma_Si, r_ik/sigma_Si, r_jk/sigma_Si))*(epsilon_Si/sigma_Si);
@@ -292,7 +292,7 @@ double v3_derivative_of_riy(real3 i, real3 j, real3 k, double r_ij, double r_ik,
 	return v3_derived_by_rij*expression1 + v3_derived_by_rik*expression2;
 }
 
-double v3_derivative_of_riz(real3 i, real3 j, real3 k, double r_ij, double r_ik, double r_jk)
+__host__ __device__ double v3_derivative_of_riz(real3 i, real3 j, real3 k, double r_ij, double r_ik, double r_jk)
 {
 	double v3_derived_by_rij = (f3_derivative_of_rij_tag(r_ij/sigma_Si, r_ik/sigma_Si, r_jk/sigma_Si))*(epsilon_Si/sigma_Si);
 	double v3_derived_by_rik = (f3_derivative_of_rik_tag(r_ij/sigma_Si, r_ik/sigma_Si, r_jk/sigma_Si))*(epsilon_Si/sigma_Si);
@@ -308,7 +308,7 @@ double v3_derivative_of_riz(real3 i, real3 j, real3 k, double r_ij, double r_ik,
 
 
 //-------------------- potential between three Si particles -------------------//
-double hi(double r_ij_tag, double r_ik_tag, double r_jk_tag)
+__host__ __device__ double hi(double r_ij_tag, double r_ik_tag, double r_jk_tag)
 {
 	double cosJik_plus_oneThird = ((r_ij_tag*r_ij_tag + r_ik_tag*r_ik_tag - r_jk_tag*r_jk_tag)/(2.0 * r_ij_tag * r_ik_tag)) + (1.0/3.0);
 
@@ -325,7 +325,7 @@ double hi(double r_ij_tag, double r_ik_tag, double r_jk_tag)
 	return lamda_Si*exponent*cosJik_plus_oneThird*cosJik_plus_oneThird;
 }
 
-double hj(double r_ij_tag, double r_ik_tag, double r_jk_tag)
+__host__ __device__ double hj(double r_ij_tag, double r_ik_tag, double r_jk_tag)
 {
 	double cosIjk_plus_oneThird = ((r_ij_tag*r_ij_tag + r_jk_tag*r_jk_tag - r_ik_tag*r_ik_tag)/(2.0 * r_ij_tag * r_jk_tag)) + (1.0/3.0);
 
@@ -342,7 +342,7 @@ double hj(double r_ij_tag, double r_ik_tag, double r_jk_tag)
 	return lamda_Si*exponent*cosIjk_plus_oneThird*cosIjk_plus_oneThird;
 }
 
-double hk(double r_ij_tag, double r_ik_tag, double r_jk_tag)
+__host__ __device__ double hk(double r_ij_tag, double r_ik_tag, double r_jk_tag)
 {
 	double cosIkj_plus_oneThird = ((r_ik_tag*r_ik_tag + r_jk_tag*r_jk_tag - r_ij_tag*r_ij_tag)/(2.0 * r_ik_tag * r_jk_tag)) + (1.0/3.0);
 
@@ -359,7 +359,7 @@ double hk(double r_ij_tag, double r_ik_tag, double r_jk_tag)
 	return lamda_Si*exponent*cosIkj_plus_oneThird*cosIkj_plus_oneThird;
 }
 
-double f3(double r_ij_tag, double r_ik_tag, double r_jk_tag)
+__host__ __device__ double f3(double r_ij_tag, double r_ik_tag, double r_jk_tag)
 {
 	double h_i = 0.0;
 	double h_j = 0.0;
@@ -379,8 +379,9 @@ double f3(double r_ij_tag, double r_ik_tag, double r_jk_tag)
 	return h_i + h_j + h_k;
 }
 
-double v3(double r_ij_tag, double r_ik_tag, double r_jk_tag)
+__host__ __device__ double v3(double r_ij_tag, double r_ik_tag, double r_jk_tag)
 {
 	return f3(r_ij_tag,r_ik_tag,r_jk_tag)*epsilon_Si;
 }
-//----------------------------------------------------------------------------//*/
+//----------------------------------------------------------------------------//
+*/

@@ -1,7 +1,8 @@
-/*#include "LennardJones.h"
+/*
+#include "LennardJones.h"
 
 //------------------------Lennard Jones Potential -----------------------------//
-double lennardJonesForce(double dist, double sig, double eps)
+__host__ __device__ double lennardJonesForce(double dist, double sig, double eps)
 {
 	double sigsq = sig*sig;
 	double con = 24.0*eps/sigsq;
@@ -18,7 +19,7 @@ double lennardJonesForce(double dist, double sig, double eps)
 }
 //----------------------------------------------------------------------------//
 
-double lennardJonesPotential(double dist, double sig, double eps)
+__host__ __device__ double lennardJonesPotential(double dist, double sig, double eps)
 {
 	double expr = sig/dist;
 	double expr2 = expr*expr;
@@ -27,5 +28,6 @@ double lennardJonesPotential(double dist, double sig, double eps)
 	double expr12 = expr6*expr6;
 
 	return 4.0*eps*(expr12-expr6);
-}*/
+}
 
+*/

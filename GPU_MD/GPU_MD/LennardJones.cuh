@@ -1,6 +1,5 @@
-/*
-#ifndef LENNARDJONES_H_
-#define LENNARDJONES_H_
+#ifndef LENNARDJONES_CU_H_
+#define LENNARDJONES_CU_H_
 
 #include "Structures.h"
 #include "Constants.h"
@@ -12,9 +11,8 @@
 #include <device_launch_parameters.h>//cuda
 
 //-----------------Lennard Jones Force -------------------//
-__host__ __device__ double lennardJonesForce(double, double, double);
+__device__ double d_lennardJonesForce(double, double, double);
 //--------------------------------------------------------//
-__host__ __device__ double lennardJonesPotential(double, double, double);
+__device__ double d_lennardJonesPotential(double, double, double);
 
-#endif //LENNARDJONES_H_
-*/
+#endif //LENNARDJONES_CU_H_
