@@ -39,6 +39,7 @@ struct configurations
 	bool ANIMATE;
 	bool useLennardJonesPotentialForSi;
 	bool PRINT_GRAPHS;
+	bool USE_GPU;
 };
 
 #endif	//CONFIGURATIONS_H_

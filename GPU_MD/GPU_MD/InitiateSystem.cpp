@@ -128,6 +128,11 @@ int readConfig(string configFilename, configurations *config)
 				pos = line.find_first_of('=');
 				config->OUT_FOR_GRAPHS = line.substr(pos+1, line.size());
 			}
+			else if(line.find("USE_GPU") == 0)
+			{
+				pos = line.find_first_of('=');
+				config->USE_GPU = atoi(line.substr(pos+1, line.size()).c_str());
+			}
 		}
 	}
 

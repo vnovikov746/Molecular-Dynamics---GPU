@@ -21,7 +21,6 @@
   <ItemGroup>
     <ClCompile Include="Calculations.cpp" />
     <ClCompile Include="Equi.cpp" />
-    <ClCompile Include="GPU_MD.cpp" />
     <ClCompile Include="InitiateSystem.cpp" />
     <ClCompile Include="LennardJones.cpp" />
     <ClCompile Include="NeighborLists.cpp" />
@@ -38,6 +37,12 @@
     <ClInclude Include="NeighborLists.h" />
     <ClInclude Include="SiPotential.h" />
     <ClInclude Include="Structures.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="Calculations.cu" />
+    <CudaCompile Include="LennardJones.cu" />
+    <CudaCompile Include="Main.cu" />
+    <CudaCompile Include="SiPotential.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{933F789A-6C01-4F64-A12D-66084BC2E830}</ProjectGuid>
@@ -89,6 +94,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(CUDA_INC_PATH);$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -108,6 +114,14 @@
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
 copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
+    <CudaCompile>
+      <CInterleavedPTX>true</CInterleavedPTX>
+      <NvccCompilation>compile</NvccCompilation>
+      <AdditionalOptions>--ptxas-options="-v" -fmad=false %(AdditionalOptions)</AdditionalOptions>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <GenerateLineInfo>true</GenerateLineInfo>
+      <MaxRegCount>32</MaxRegCount>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

@@ -10,115 +10,60 @@ __host__ __device__ double distance2(real3 i, real3 j)
 }
 
 //-------------------------- calculate Force Si ------------------------------//
-__global__ void d_calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, int* a)
+__global__ void
+__launch_bounds__(1024, 4)
+d_calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruct* siParticles, particleStruct* siParticles2, particleStruct* xeParticles, int numOfSi, int numOfXe, bool USE_NEIGHBOR_LISTS, bool useLennardJonesPotentialForSi)
 {
 	int idx = threadIdx.x + blockIdx.x*blockDim.x;
-	a[idx] *= 3;
-/*	for(int i = 0; i < config.SI_PARTICLES; i++)
+	if(idx < numOfXe)
 	{
-		particleStruct particle = siParticles[i];
-
-		real3 iPosition = particle.position;
-		int countSi = 0;
-		int countXe = 0;
+		real3 iPosition;
+		real3 jPosition;
+		real3 kPosition;
 		double r_ij = 0.0;
 		double r_ik = 0.0;
 		double r_jk = 0.0;
-		siParticles[i].force.x = 0.0;
-		siParticles[i].force.y = 0.0;
-		siParticles[i].force.z = 0.0;
-		real3 jPosition;
-		real3 kPosition;
-
-		if(config.USE_NEIGHBOR_LISTS)
+		iPosition = siParticles[idx].position;
+		siParticles[idx].force.x = 0.0;
+		siParticles[idx].force.y = 0.0;
+		siParticles[idx].force.z = 0.0;
+		for(int j = 0; j < numOfSi; j++)
 		{
-			for(countSi = 0; countSi < MAX_SI_NEIGHBORS && particle.siNeighbors[countSi] != -1; countSi++);
-			for(countXe = 0; countXe < MAX_XE_NEIGHBORS && particle.xeNeighbors[countXe] != -1; countXe++);
-		}
-
-		if(!config.USE_NEIGHBOR_LISTS)
-		{
-			countSi = config.SI_PARTICLES;
-			countXe = config.XE_PARTICLES;
-		}
-
-		if(config.useLennardJonesPotentialForSi)
-		{
-			for(int j = 0; j < countSi; j++)
+			if(j != idx)
 			{
-				if(j != i)
+				jPosition = siParticles2[j].position;
+				r_ij = distance2(iPosition, jPosition);
+				if(r_ij/sigma_Si < a_Si)
 				{
-					if(!config.USE_NEIGHBOR_LISTS)
-						jPosition = siParticles[j].position;
-					else
-						jPosition = siParticles[particle.siNeighbors[j]].position;
-
-					r_ij = distance2(iPosition, jPosition);	
-		//			if(r_ij/sigma_Si < 1.8)
-					{
-						siParticles[i].force.x += (iPosition.x-jPosition.x)*lennardJonesForce(r_ij,sigma_Si,epsilon_Si);
-						siParticles[i].force.y += (iPosition.y-jPosition.y)*lennardJonesForce(r_ij,sigma_Si,epsilon_Si);
-						siParticles[i].force.z += (iPosition.z-jPosition.z)*lennardJonesForce(r_ij,sigma_Si,epsilon_Si);
-					}
+					siParticles[idx].force.x -= v2_derivative_of_rix(iPosition, jPosition, r_ij);
+					siParticles[idx].force.y -= v2_derivative_of_riy(iPosition, jPosition, r_ij);
+					siParticles[idx].force.z -= v2_derivative_of_riz(iPosition, jPosition, r_ij);
 				}
-			}
-		}
-
-		else
-		{	
-			for(int j = 0; j < countSi; j++)
-			{
-				if(j != i)
+				for(int k = 0; k < numOfSi; k++)
 				{
-					if(!config.USE_NEIGHBOR_LISTS)
-						jPosition = siParticles[j].position;
-					else
-						jPosition = siParticles[particle.siNeighbors[j]].position;
-			
-					r_ij = distance2(iPosition, jPosition);
+					if(k != idx && k != j)
+					{
+						kPosition = siParticles2[k].position;							
 
-					if(r_ij/sigma_Si < a_Si)
-					{
-						siParticles[i].force.x -= v2_derivative_of_rix(iPosition, jPosition, r_ij);
-						siParticles[i].force.y -= v2_derivative_of_riy(iPosition, jPosition, r_ij);
-						siParticles[i].force.z -= v2_derivative_of_riz(iPosition, jPosition, r_ij);
-					}
-					for(int k = 0; k < countSi; k++)
-					{
-						if(k != i && k != j)
+						r_ik = distance2(iPosition, kPosition);
+						r_jk = distance2(jPosition, kPosition);
+						if((r_ij/sigma_Si < a_Si && r_ik/sigma_Si < a_Si) || (r_ij/sigma_Si < a_Si && r_jk/sigma_Si < a_Si) || (r_ik/sigma_Si < a_Si && r_jk/sigma_Si < a_Si))
 						{
-							if(!config.USE_NEIGHBOR_LISTS)
-							{
-								kPosition = siParticles[k].position;							
-							}
-							else
-							{
-								kPosition = siParticles[particle.siNeighbors[k]].position;
-							}
-
-							r_ik = distance2(iPosition, kPosition);
-							r_jk = distance2(jPosition, kPosition);
-							if((r_ij/sigma_Si < a_Si && r_ik/sigma_Si < a_Si) || (r_ij/sigma_Si < a_Si && r_jk/sigma_Si < a_Si) || (r_ik/sigma_Si < a_Si && r_jk/sigma_Si < a_Si))
-							{
-								siParticles[i].force.x -= v3_derivative_of_rix(iPosition, jPosition, kPosition, r_ij, r_ik, r_jk);
-								siParticles[i].force.x -= v3_derivative_of_rix(iPosition, kPosition, jPosition, r_ik, r_ij, r_jk);
-								siParticles[i].force.y -= v3_derivative_of_riy(iPosition, jPosition, kPosition, r_ij, r_ik, r_jk);
-								siParticles[i].force.y -= v3_derivative_of_riy(iPosition, kPosition, jPosition, r_ik, r_ij, r_jk);
-								siParticles[i].force.z -= v3_derivative_of_riz(iPosition, jPosition, kPosition, r_ij, r_ik, r_jk);
-								siParticles[i].force.z -= v3_derivative_of_riz(iPosition, kPosition, jPosition, r_ik, r_ij, r_jk);
-							}
+							siParticles[idx].force.x -= v3_derivative_of_rix(iPosition, jPosition, kPosition, r_ij, r_ik, r_jk);
+							siParticles[idx].force.x -= v3_derivative_of_rix(iPosition, kPosition, jPosition, r_ik, r_ij, r_jk);
+							siParticles[idx].force.y -= v3_derivative_of_riy(iPosition, jPosition, kPosition, r_ij, r_ik, r_jk);
+							siParticles[idx].force.y -= v3_derivative_of_riy(iPosition, kPosition, jPosition, r_ik, r_ij, r_jk);
+							siParticles[idx].force.z -= v3_derivative_of_riz(iPosition, jPosition, kPosition, r_ij, r_ik, r_jk);
+							siParticles[idx].force.z -= v3_derivative_of_riz(iPosition, kPosition, jPosition, r_ik, r_ij, r_jk);
 						}
 					}
 				}
 			}
-		}*/
-
+		}
+	}
 	/*	for(int j = 0; j < countXe; j++)
 		{
-				if(!config.USE_NEIGHBOR_LISTS)
-					jPosition = xeParticles[j].position;
-				else
-					jPosition = xeParticles[particle.xeNeighbors[j]];
+			jPosition = xeParticles[j].position;
 
 			jPosition.x += 0.25*config->SI_LENGTH*space_Si;
 			jPosition.y += 0.25*config->SI_LENGTH*space_Si;
@@ -135,59 +80,40 @@ __global__ void d_calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, 
 }
 //----------------------------------------------------------------------------//
 
-__global__ void d_calculateForce_Xe(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruct* xeParticles, particleStruct* siParticles, configurations config)
+__global__ void 
+__launch_bounds__(1024, 4)
+d_calculateForce_Xe(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruct* xeParticles, particleStruct* xeParticles2, particleStruct* siParticles, int numOfSi, int numOfXe, bool USE_NEIGHBOR_LISTS)
 {
-	for(int i = 0; i < config.XE_PARTICLES; i++)
+//	extern __shared__ particleStruct* sharedXe[];
+
+	int idx = threadIdx.x + blockIdx.x*blockDim.x;
+	if(idx < numOfXe)
 	{
-		particleStruct particle = xeParticles[i];
-
-		real3 iPosition = particle.position;
-
-		int countSi = 0;
-		int countXe = 0;
-		double r_ij = 0.0;
-		xeParticles[i].force.x = 0.0;
-		xeParticles[i].force.y = 0.0;
-		xeParticles[i].force.z = 0.0;
+		real3 iPosition;
 		real3 jPosition;
-
-		if(config.USE_NEIGHBOR_LISTS)
+		double r_ij = 0.0;
+		iPosition = xeParticles[idx].position;
+		xeParticles[idx].force.x = 0.0;
+		xeParticles[idx].force.y = 0.0;
+		xeParticles[idx].force.z = 0.0;
+		for(int j = 0; j < numOfXe; j++)
 		{
-			for(countSi = 0; countSi < MAX_SI_NEIGHBORS && particle.siNeighbors[countSi] != -1; countSi++);
-			for(countXe = 0; countXe < MAX_XE_NEIGHBORS && particle.xeNeighbors[countXe] != -1; countXe++);
-		}
-
-		if(!config.USE_NEIGHBOR_LISTS)
-		{
-			countSi = config.SI_PARTICLES;
-			countXe = config.XE_PARTICLES;
-		}
-
-		for(int j = 0; j < countXe; j++)
-		{
-			if(j != i)
+			if(j != idx)
 			{
-				if(!config.USE_NEIGHBOR_LISTS)
-					jPosition = xeParticles[j].position;
-				else
-					jPosition = xeParticles[particle.xeNeighbors[j]].position;
-
+				jPosition = xeParticles2[j].position;
 				r_ij = distance2(iPosition, jPosition);
 				if(r_ij/sigma_Xe_Xe < xe_Cluster)
 				{
-					xeParticles[i].force.x += (iPosition.x-jPosition.x)*lennardJonesForce(r_ij,sigma_Xe_Xe,epsilon_Xe_Xe);
-					xeParticles[i].force.y += (iPosition.y-jPosition.y)*lennardJonesForce(r_ij,sigma_Xe_Xe,epsilon_Xe_Xe);
-					xeParticles[i].force.z += (iPosition.z-jPosition.z)*lennardJonesForce(r_ij,sigma_Xe_Xe,epsilon_Xe_Xe);
+					xeParticles[idx].force.x += (iPosition.x-jPosition.x)*lennardJonesForce(r_ij,sigma_Xe_Xe,epsilon_Xe_Xe);
+					xeParticles[idx].force.y += (iPosition.y-jPosition.y)*lennardJonesForce(r_ij,sigma_Xe_Xe,epsilon_Xe_Xe);
+					xeParticles[idx].force.z += (iPosition.z-jPosition.z)*lennardJonesForce(r_ij,sigma_Xe_Xe,epsilon_Xe_Xe);
 				}
 			}
 		}
-
+	}
 	/*	for(int j = 0; j < countSi; j++)
 		{
-			if(!config.USE_NEIGHBOR_LISTS)
-				jPosition = siParticles[j].position;
-			else
-				jPosition = siParticles[particle.siNeighbors[j]];
+			jPosition = siParticles[j].position;
 
 			r_ij = distance2(iPosition, jPosition);
 			if(r_ij/sigma_Si_Xe < a_Si_Xe)
@@ -197,151 +123,121 @@ __global__ void d_calculateForce_Xe(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, 
 				xeParticles[i].force.z += (iPosition.z-jPosition.z)*lennardJonesForce(r_ij,sigma_Si_Xe,epsilon_Si_Xe);
 			}
 		}*/
-	}
+//	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////!!!!
 //----------------------calculate total potential of Si -----------------------//
 /*__global__ double d_V_total_Si(int SI_PARTICLES, particleStruct* siParticles)
 {
-	double vTotal = 0.0;
-	for(int i = 0; i < SI_PARTICLES; i++)
-	{
-		for(int j = i+1; j < SI_PARTICLES; j++)
-		{
-			vTotal += v2(distance2(siParticles[i].position, siParticles[j].position)/sigma_Si);
-		}
-	}
-	for(int i = 0; i < SI_PARTICLES; i++)
-	{
-		for(int j = i+1; j < SI_PARTICLES; j++)
-		{
-			for(int k = j+1; k < SI_PARTICLES; k++)
-			{
-				vTotal += v3(distance2(siParticles[i].position,siParticles[j].position)/sigma_Si, distance2(siParticles[i].position,siParticles[k].position)/sigma_Si, distance2(siParticles[j].position,siParticles[k].position)/sigma_Si);
-			}
-		}
-	}
-	for(int i = 0; i < SI_PARTICLES; i++)
-	{
-//		cout<<(pow((sqrt((siParticles[i].velocity.x*siParticles[i].velocity.x)+(siParticles[i].velocity.y*siParticles[i].velocity.y)+(siParticles[i].velocity.z*siParticles[i].velocity.z))),2.0)*SiMass)/2<<endl;
-//		vTotal += (pow((sqrt((siParticles[i].velocity.x*siParticles[i].velocity.x)+(siParticles[i].velocity.y*siParticles[i].velocity.y)+(siParticles[i].velocity.z*siParticles[i].velocity.z))),2.0)*SiMass)/2;
-	}
-	return vTotal;
+
 }
 //----------------------------------------------------------------------------//
 __global__ double d_V_total_Si_Xe(int SI_PARTICLES, particleStruct* siParticles, int XE_PARTICLES, particleStruct* xeParticles)
 {
-	double vTotal = 0.0;
-	for(int i = 0; i < SI_PARTICLES; i++)
-	{
-		for(int j = 0; j < XE_PARTICLES; j++)
-		{
-//			if(distance2(siParticles[i].position, xeParticles[j].position)/sigma_Si_Xe < a_Si_Xe)
-				vTotal += lennardJonesPotential(distance2(siParticles[i].position, xeParticles[j].position), sigma_Si_Xe, epsilon_Si_Xe);
-		}
-	}
-	return vTotal;
+
 }
 
 __global__ double d_V_total_Xe(int XE_PARTICLES, particleStruct* xeParticles)
 {
-	double vTotal = 0.0;
-	for(int i = 0; i < XE_PARTICLES-1; i++)
-	{
-		for(int j = i+1; j < XE_PARTICLES; j++)
-		{
-			if(distance2(xeParticles[i].position, xeParticles[j].position)/sigma_Xe_Xe < a_Si_Xe)
-				vTotal += lennardJonesPotential(distance2(xeParticles[i].position, xeParticles[j].position), sigma_Xe_Xe, epsilon_Xe_Xe);
-		}
-	}
-	for(int i = 0; i < XE_PARTICLES; i++)
-	{
-		vTotal += (pow((sqrt((xeParticles[i].velocity.x*xeParticles[i].velocity.x)+(xeParticles[i].velocity.y*xeParticles[i].velocity.y)+(xeParticles[i].velocity.z*xeParticles[i].velocity.z))),2.0)*XeMass)/2;
-	}
-	return vTotal;
+
 }
 
 __global__ void d_V_total(int SI_PARTICLES, particleStruct* siParticles, int XE_PARTICLES, particleStruct* xeParticles)
 {
-	double vTotal = 0.0;
-	vTotal += V_total_Si(SI_PARTICLES, siParticles);
-	vTotal += V_total_Si_Xe(SI_PARTICLES, siParticles, XE_PARTICLES, xeParticles);
-	vTotal += V_total_Xe(XE_PARTICLES, xeParticles);
-	cout<<vTotal<<endl;
+
 }*/
 //////////////////////////////////////////////////////////////////////////////////////////////!!!!
 __global__ void d_initiateAcceleration(particleStruct *particles, int listSize, double mass)
 {
-	for(int i = 0; i < listSize; i++)
+	int idx = threadIdx.x + blockIdx.x*blockDim.x;
+	if(idx < listSize)
 	{
-		particles[i].aAcc.x = particles[i].force.x/mass;
-		particles[i].aAcc.y = particles[i].force.y/mass;
-		particles[i].aAcc.z = particles[i].force.z/mass;
+		particles[idx].aAcc.x = particles[idx].force.x/mass;
+		particles[idx].aAcc.y = particles[idx].force.y/mass;
+		particles[idx].aAcc.z = particles[idx].force.z/mass;
 	}
 }
 
 __global__ void d_predict(particleStruct *particles, int listSize, float dt)
 {
-	double c1 = dt;
-    double c2 = c1*dt/2.0;
-    double c3 = c2*dt/3.0;
-    double c4 = c3*dt/4.0;
+	int idx = threadIdx.x + blockIdx.x*blockDim.x;
 
-	for(int i = 0; i < listSize; i++)
+	__shared__ double c1;
+    __shared__ double c2;
+    __shared__ double c3;
+    __shared__ double c4;
+
+	c1 = dt;
+	c2 = c1*dt/2.0;
+	c3 = c2*dt/3.0;
+	c4 = c3*dt/4.0;
+
+	if(idx < listSize)
 	{
-		particles[i].position.x += c1*particles[i].velocity.x + c2*particles[i].aAcc.x + c3*particles[i].bAcc.x + c4*particles[i].cAcc.x;
-		particles[i].position.y += c1*particles[i].velocity.y + c2*particles[i].aAcc.y + c3*particles[i].bAcc.y + c4*particles[i].cAcc.y;
-		particles[i].position.z += c1*particles[i].velocity.z + c2*particles[i].aAcc.z + c3*particles[i].bAcc.z + c4*particles[i].cAcc.z;
-		particles[i].velocity.x += c1*particles[i].aAcc.x + c2*particles[i].bAcc.x + c3*particles[i].cAcc.x;
-		particles[i].velocity.y += c1*particles[i].aAcc.y + c2*particles[i].bAcc.y + c3*particles[i].cAcc.y;
-		particles[i].velocity.z += c1*particles[i].aAcc.z + c2*particles[i].bAcc.z + c3*particles[i].cAcc.z;
-		particles[i].aAcc.x += c1*particles[i].bAcc.x + c2*particles[i].cAcc.x;
-		particles[i].aAcc.y += c1*particles[i].bAcc.y + c2*particles[i].cAcc.y;
-		particles[i].aAcc.z += c1*particles[i].bAcc.z + c2*particles[i].cAcc.z;
-		particles[i].bAcc.x += c1*particles[i].cAcc.x;
-		particles[i].bAcc.y += c1*particles[i].cAcc.y;
-		particles[i].bAcc.z += c1*particles[i].cAcc.z;
+		particles[idx].position.x += c1*particles[idx].velocity.x + c2*particles[idx].aAcc.x + c3*particles[idx].bAcc.x + c4*particles[idx].cAcc.x;
+		particles[idx].position.y += c1*particles[idx].velocity.y + c2*particles[idx].aAcc.y + c3*particles[idx].bAcc.y + c4*particles[idx].cAcc.y;
+		particles[idx].position.z += c1*particles[idx].velocity.z + c2*particles[idx].aAcc.z + c3*particles[idx].bAcc.z + c4*particles[idx].cAcc.z;
+		particles[idx].velocity.x += c1*particles[idx].aAcc.x + c2*particles[idx].bAcc.x + c3*particles[idx].cAcc.x;
+		particles[idx].velocity.y += c1*particles[idx].aAcc.y + c2*particles[idx].bAcc.y + c3*particles[idx].cAcc.y;
+		particles[idx].velocity.z += c1*particles[idx].aAcc.z + c2*particles[idx].bAcc.z + c3*particles[idx].cAcc.z;
+		particles[idx].aAcc.x += c1*particles[idx].bAcc.x + c2*particles[idx].cAcc.x;
+		particles[idx].aAcc.y += c1*particles[idx].bAcc.y + c2*particles[idx].cAcc.y;
+		particles[idx].aAcc.z += c1*particles[idx].bAcc.z + c2*particles[idx].cAcc.z;
+		particles[idx].bAcc.x += c1*particles[idx].cAcc.x;
+		particles[idx].bAcc.y += c1*particles[idx].cAcc.y;
+		particles[idx].bAcc.z += c1*particles[idx].cAcc.z;
 	}
 }
 
 __global__ void d_correct(particleStruct *particles, double dt, int listSize, double mass)
 {
-	double c1 = dt ;
-	double c2 = c1*dt/2.0;
-	double c3 = c2*dt/3.0; 
-	double c4 = c3*dt/4.0;
+	__shared__ double c1;
+	__shared__ double c2;
+	__shared__ double c3;
+	__shared__ double c4;
 
-	double cr = GEAR1*c2;
-	double cv = GEAR2*c2/c1;
-	double cb = GEAR3*c2/c3;
-	double cc = GEAR4*c2/c4;
+	__shared__ double cr;
+	__shared__ double cv;
+	__shared__ double cb;
+	__shared__ double cc;
 
-	for(int i = 0; i < listSize; i++)
+	c1 = dt ;
+	c2 = c1*dt/2.0;
+	c3 = c2*dt/3.0; 
+	c4 = c3*dt/4.0;
+
+	cr = GEAR1*c2;
+	cv = GEAR2*c2/c1;
+	cb = GEAR3*c2/c3;
+	cc = GEAR4*c2/c4;
+
+	int idx = threadIdx.x + blockIdx.x*blockDim.x;
+	if(idx < listSize)
 	{
-		double axi = particles[i].force.x/mass;
-      	double ayi = particles[i].force.y/mass;
-      	double azi = particles[i].force.z/mass;
+		double axi = particles[idx].force.x/mass;
+      	double ayi = particles[idx].force.y/mass;
+      	double azi = particles[idx].force.z/mass;
 
-		double corrx = axi - particles[i].aAcc.x;
-    	double corry = ayi - particles[i].aAcc.y;
-    	double corrz = azi - particles[i].aAcc.z;
+		double corrx = axi - particles[idx].aAcc.x;
+    	double corry = ayi - particles[idx].aAcc.y;
+    	double corrz = azi - particles[idx].aAcc.z;
 
-		particles[i].position.x += cr*corrx;
-		particles[i].position.y += cr*corry;
-		particles[i].position.z += cr*corrz;
-		particles[i].velocity.x += cv*corrx;
-		particles[i].velocity.y += cv*corry;
-		particles[i].velocity.z += cv*corrz;
-		particles[i].aAcc.x = axi;
-		particles[i].aAcc.y = ayi;
-		particles[i].aAcc.z = azi;
-		particles[i].bAcc.x += cb*corrx;
-		particles[i].bAcc.y += cb*corry;
-		particles[i].bAcc.z += cb*corrz;
-		particles[i].cAcc.x += cc*corrx;
-		particles[i].cAcc.y += cc*corry;
-    	particles[i].cAcc.z += cc*corrz;
+		particles[idx].position.x += cr*corrx;
+		particles[idx].position.y += cr*corry;
+		particles[idx].position.z += cr*corrz;
+		particles[idx].velocity.x += cv*corrx;
+		particles[idx].velocity.y += cv*corry;
+		particles[idx].velocity.z += cv*corrz;
+		particles[idx].aAcc.x = axi;
+		particles[idx].aAcc.y = ayi;
+		particles[idx].aAcc.z = azi;
+		particles[idx].bAcc.x += cb*corrx;
+		particles[idx].bAcc.y += cb*corry;
+		particles[idx].bAcc.z += cb*corrz;
+		particles[idx].cAcc.x += cc*corrx;
+		particles[idx].cAcc.y += cc*corry;
+    	particles[idx].cAcc.z += cc*corrz;
 	}
 }
 
@@ -359,7 +255,7 @@ __host__ __device__ double lennardJonesForce(double dist, double sig, double eps
 	double dist14 = dist2*dist4*dist8;
 	double invdist8= 1.0/dist8;
 	double invdist14= 1.0/dist14;
-	double s = 2.0*invdist14-invdist8;
+	double s = 2.0f*invdist14-invdist8;
 	return s * con;
 }
 //----------------------------------------------------------------------------//
@@ -381,10 +277,6 @@ __host__ __device__ double lennardJonesPotential(double dist, double sig, double
 //-------------------- force between two Si particles ---------------------//
 __host__ __device__ double f2_derivative_of_rij_tag(double r_ij_tag)
 {
-	double first = -4*B_Si*(1.0/(r_ij_tag*r_ij_tag*r_ij_tag*r_ij_tag*r_ij_tag));
-	double second = ((B_Si*(1.0/(r_ij_tag*r_ij_tag*r_ij_tag*r_ij_tag)))-1)*(1.0/((r_ij_tag-a_Si)*(r_ij_tag-a_Si)));
-	double print = first-second;
-
 	double r_ij_tag_minus_a = r_ij_tag - a_Si;//r'ij-a
 	double r_ij_tag_minus_a2 = r_ij_tag_minus_a*r_ij_tag_minus_a;
 

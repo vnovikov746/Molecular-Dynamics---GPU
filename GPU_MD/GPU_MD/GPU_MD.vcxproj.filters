@@ -7,7 +7,7 @@
     <Filter Include="Source Files">
       <UniqueIdentifier>{f2326709-1b72-4461-86c7-e0b1439c1ce7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="CU Files">
+    <Filter Include="CU Source Files">
       <UniqueIdentifier>{f997a1c3-a382-45d6-8037-e8bb68e58487}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -28,9 +28,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SiPotential.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GPU_MD.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -65,5 +62,19 @@
     <ClInclude Include="Equi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="Calculations.cu">
+      <Filter>CU Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="LennardJones.cu">
+      <Filter>CU Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="SiPotential.cu">
+      <Filter>CU Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Main.cu">
+      <Filter>CU Source Files</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

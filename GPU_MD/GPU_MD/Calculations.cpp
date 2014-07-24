@@ -4,20 +4,14 @@
 
 #include "Calculations.h"
 
-double distance2(real3 i, real3 j)
-{
-	return sqrt((i.x-j.x)*(i.x-j.x) + (i.y-j.y)*(i.y-j.y) + (i.z-j.z)*(i.z-j.z));
-}
-
 //-------------------------- calculate Force Si ------------------------------//
-void calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruct* siParticles, particleStruct* xeParticles, configurations config)
+void calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruct* siParticles, particleStruct* xeParticles, int numOfSi, int numOfXe, bool USE_NEIGHBOR_LISTS, bool useLennardJonesPotentialForSi)
 {
-	for(int i = 0; i < config.SI_PARTICLES; i++)
+	for(int i = 0; i < numOfSi; i++)
 	{
+		particleStruct particle = siParticles[i];
 		real3 *siNeigborsPositions = NULL;
 		real3 *xeNeigborsPositions = NULL;
-
-		particleStruct particle = siParticles[i];
 
 		real3 iPosition = particle.position;
 		int countSi = 0;
@@ -31,7 +25,7 @@ void calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruc
 		real3 jPosition;
 		real3 kPosition;
 
-		if(config.USE_NEIGHBOR_LISTS)
+		if(USE_NEIGHBOR_LISTS)
 		{
 			siNeigborsPositions = new real3[MAX_SI_NEIGHBORS];
 			xeNeigborsPositions = new real3[MAX_XE_NEIGHBORS];
@@ -45,19 +39,19 @@ void calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruc
 			}
 		}
 
-		if(!config.USE_NEIGHBOR_LISTS)
+		if(!USE_NEIGHBOR_LISTS)
 		{
-			countSi = config.SI_PARTICLES;
-			countXe = config.XE_PARTICLES;
+			countSi = numOfSi;
+			countXe = numOfXe;
 		}
 
-		if(config.useLennardJonesPotentialForSi)
+		if(useLennardJonesPotentialForSi)
 		{
 			for(int j = 0; j < countSi; j++)
 			{
 				if(j != i)
 				{
-					if(!config.USE_NEIGHBOR_LISTS)
+					if(!USE_NEIGHBOR_LISTS)
 						jPosition = siParticles[j].position;
 					else
 						jPosition = siNeigborsPositions[j];
@@ -79,7 +73,7 @@ void calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruc
 			{
 				if(j != i)
 				{
-					if(!config.USE_NEIGHBOR_LISTS)
+					if(!USE_NEIGHBOR_LISTS)
 						jPosition = siParticles[j].position;
 					else
 						jPosition = siNeigborsPositions[j];
@@ -96,7 +90,7 @@ void calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruc
 					{
 						if(k != i && k != j)
 						{
-							if(!config.USE_NEIGHBOR_LISTS)
+							if(!USE_NEIGHBOR_LISTS)
 							{
 								kPosition = siParticles[k].position;							
 							}
@@ -124,7 +118,7 @@ void calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruc
 
 	/*	for(int j = 0; j < countXe; j++)
 		{
-				if(!config.USE_NEIGHBOR_LISTS)
+				if(!USE_NEIGHBOR_LISTS)
 					jPosition = xeParticles[j].position;
 				else
 					jPosition = xeNeigborsPositions[j];
@@ -141,7 +135,7 @@ void calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruc
 			}
 		}*/
 
-		if(config.USE_NEIGHBOR_LISTS)
+		if(USE_NEIGHBOR_LISTS)
 		{
 			free(siNeigborsPositions);
 			free(xeNeigborsPositions);
@@ -150,14 +144,13 @@ void calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruc
 }
 //----------------------------------------------------------------------------//
 
-void calculateForce_Xe(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruct* xeParticles, particleStruct* siParticles, configurations config)
+void calculateForce_Xe(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruct* xeParticles, particleStruct* siParticles, int numOfSi, int numOfXe, bool USE_NEIGHBOR_LISTS)
 {
-	for(int i = 0; i < config.XE_PARTICLES; i++)
+	for(int i = 0; i < numOfXe; i++)
 	{
+		particleStruct particle = xeParticles[i];
 		real3 *siNeigborsPositions = NULL;
 		real3 *xeNeigborsPositions = NULL;
-
-		particleStruct particle = xeParticles[i];
 
 		real3 iPosition = particle.position;
 
@@ -169,7 +162,7 @@ void calculateForce_Xe(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruc
 		xeParticles[i].force.z = 0.0;
 		real3 jPosition;
 
-		if(config.USE_NEIGHBOR_LISTS)
+		if(USE_NEIGHBOR_LISTS)
 		{
 			siNeigborsPositions = new real3[MAX_SI_NEIGHBORS];
 			xeNeigborsPositions = new real3[MAX_XE_NEIGHBORS];
@@ -183,17 +176,17 @@ void calculateForce_Xe(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruc
 			}
 		}
 
-		if(!config.USE_NEIGHBOR_LISTS)
+		if(!USE_NEIGHBOR_LISTS)
 		{
-			countSi = config.SI_PARTICLES;
-			countXe = config.XE_PARTICLES;
+			countSi = numOfSi;
+			countXe = numOfXe;
 		}
 
 		for(int j = 0; j < countXe; j++)
 		{
 			if(j != i)
 			{
-				if(!config.USE_NEIGHBOR_LISTS)
+				if(!USE_NEIGHBOR_LISTS)
 					jPosition = xeParticles[j].position;
 				else
 					jPosition = xeNeigborsPositions[j];
@@ -210,7 +203,7 @@ void calculateForce_Xe(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruc
 
 	/*	for(int j = 0; j < countSi; j++)
 		{
-			if(!config.USE_NEIGHBOR_LISTS)
+			if(!USE_NEIGHBOR_LISTS)
 				jPosition = siParticles[j].position;
 			else
 				jPosition = siNeigborsPositions[j];
@@ -224,7 +217,7 @@ void calculateForce_Xe(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruc
 			}
 		}*/
 
-		if(config.USE_NEIGHBOR_LISTS)
+		if(USE_NEIGHBOR_LISTS)
 		{
 			free(siNeigborsPositions);
 			free(xeNeigborsPositions);
