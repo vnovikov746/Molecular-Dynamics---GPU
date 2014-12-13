@@ -15,7 +15,7 @@ __launch_bounds__(1024, 4)
 d_calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruct* siParticles, particleStruct* siParticles2, particleStruct* xeParticles, int numOfSi, int numOfXe, bool USE_NEIGHBOR_LISTS, bool useLennardJonesPotentialForSi)
 {
 	int idx = threadIdx.x + blockIdx.x*blockDim.x;
-	if(idx < numOfXe)
+	if(idx < numOfSi)
 	{
 		real3 iPosition;
 		real3 jPosition;
@@ -43,7 +43,7 @@ d_calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruct* 
 				{
 					if(k != idx && k != j)
 					{
-						kPosition = siParticles2[k].position;							
+						kPosition = siParticles2[j].position;						
 
 						r_ik = distance2(iPosition, kPosition);
 						r_jk = distance2(jPosition, kPosition);
@@ -96,11 +96,11 @@ d_calculateForce_Xe(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruct* 
 		xeParticles[idx].force.x = 0.0;
 		xeParticles[idx].force.y = 0.0;
 		xeParticles[idx].force.z = 0.0;
-		for(int j = 0; j < numOfXe; j++)
+		for(int j = 0; j < MAX_XE_NEIGHBORS && xeParticles[idx].xeNeighbors[j] != -1; j++)
 		{
 			if(j != idx)
 			{
-				jPosition = xeParticles2[j].position;
+				jPosition = xeParticles[xeParticles[idx].xeNeighbors[j]].position;
 				r_ij = distance2(iPosition, jPosition);
 				if(r_ij/sigma_Xe_Xe < xe_Cluster)
 				{

@@ -21,6 +21,7 @@
 #include <device_launch_parameters.h>//cuda
 #include <ctime>
 
+
 GLfloat *xp;
 GLfloat *yp;
 GLfloat *zp;
@@ -62,9 +63,12 @@ ofstream xe_place_and_velocity;
 ofstream si_potential; 
 ofstream xe_potential;
 
-unsigned t0;
-unsigned elapsed;
-double averageTime = 0.0;
+double t0;
+double elapsed;
+double averageTimeSi = 0.0;
+double averageTimeXe = 0.0;
+double averageTimePredict = 0.0;
+double averageTimeCorrect = 0.0;
 
 particleStruct* d_siParticles;
 particleStruct* d_xeParticles;
@@ -164,39 +168,16 @@ int main(int argc, char *argv[])
 		cudaMalloc((void**)&d_siParticles2,sizeof(particleStruct)*config.SI_PARTICLES);
 		cudaMalloc((void**)&d_xeParticles2,sizeof(particleStruct)*config.XE_PARTICLES);
 	}
+
 	calculateForces(true);
 
 	if(config.SI_PARTICLES > 0)
 	{
-		if(!config.USE_GPU)
-		{
-			t0 = clock();
-			initiateAcceleration(lists.siParticles, config.SI_PARTICLES, SiMass);
-			elapsed = clock()-t0;
-			cout<<"initiateAcceleration si: "<<elapsed<<endl;
-		}
-		else
-		{
-			cudaMemcpy(d_siParticles, lists.siParticles, sizeof(particleStruct)*config.SI_PARTICLES, cudaMemcpyHostToDevice);
-			d_initiateAcceleration<<<(config.SI_PARTICLES/siThreadsPerBlock)+1,siThreadsPerBlock>>>(d_siParticles, config.SI_PARTICLES, SiMass);
-			cudaMemcpy(lists.siParticles, d_siParticles, sizeof(particleStruct)*config.SI_PARTICLES, cudaMemcpyDeviceToHost);
-		}
+		initiateAcceleration(lists.siParticles, config.SI_PARTICLES, SiMass);
 	}
 	if(config.XE_PARTICLES > 0)
 	{
-		if(!config.USE_GPU)
-		{
-			t0 = clock();
-			initiateAcceleration(lists.xeParticles, config.XE_PARTICLES, XeMass);
-			elapsed = clock()-t0;
-			cout<<"initiateAcceleration si: "<<elapsed<<endl;
-		}
-		else
-		{
-			cudaMemcpy(d_xeParticles, lists.xeParticles, sizeof(particleStruct)*config.XE_PARTICLES, cudaMemcpyHostToDevice);
-			d_initiateAcceleration<<<(config.XE_PARTICLES/xeThreadsPerBlock)+1,xeThreadsPerBlock>>>(d_xeParticles, config.XE_PARTICLES, XeMass);
-			cudaMemcpy(lists.xeParticles, d_xeParticles, sizeof(particleStruct)*config.XE_PARTICLES, cudaMemcpyDeviceToHost);
-		}
+		initiateAcceleration(lists.xeParticles, config.XE_PARTICLES, XeMass);
 	}
 
 	if(animation)
@@ -222,7 +203,10 @@ int main(int argc, char *argv[])
 	}
 //	system("pause");
 	cudaDeviceReset();
-	cout<<"evarageTime: "<<averageTime/(iterationNum)<<endl;
+	cout<<"evarageTime Si: "<<averageTimeSi/((double)iterationNum)<<endl;
+	cout<<"evarageTime Xe: "<<averageTimeXe/((double)iterationNum)<<endl;
+	cout<<"evarageTime Predict: "<<averageTimePredict/((double)iterationNum)<<endl;
+	cout<<"evarageTime Correct: "<<averageTimeCorrect/((double)iterationNum)<<endl;
 	return EXIT_SUCCESS;
 }
 
@@ -243,9 +227,13 @@ void calculateForces(bool first)
 
 		if(!first)
 		{
-			elapsed = clock()-t0;
+			elapsed = ((clock()-t0)/CLOCKS_PER_SEC)*1000.0;
 			cout<<"Si: "<<elapsed<<endl;
-			averageTime += elapsed;
+			averageTimeSi += elapsed;
+		}
+
+		if(!first)
+		{
 			t0 = clock();
 		}
 
@@ -253,23 +241,34 @@ void calculateForces(bool first)
 
 		if(!first)
 		{
-			elapsed = clock()-t0;
+			elapsed = ((clock()-t0)/CLOCKS_PER_SEC)*1000.0;
 			cout<<"Xe: "<<elapsed<<endl;
-			averageTime += elapsed;
+			averageTimeXe += elapsed;
 		}
 	}
 
 	else
 	{
 //////////////////////////////////////////////////CUDA
-		dim3 grid(1000);
+		dim3 grid(blocks);
 		dim3 block(siThreadsPerBlock);
-		cudaMemcpy(d_siParticles, lists.siParticles, sizeof(particleStruct)*config.SI_PARTICLES, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_xeParticles, lists.xeParticles, sizeof(particleStruct)*config.XE_PARTICLES, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_siParticles2, lists.siParticles, sizeof(particleStruct)*config.SI_PARTICLES, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_xeParticles2, lists.xeParticles, sizeof(particleStruct)*config.XE_PARTICLES, cudaMemcpyHostToDevice);
 
+		if(!first)
+		{
+			t0 = clock();
+		}
+
+		cudaMemcpy(d_siParticles, lists.siParticles, sizeof(particleStruct)*config.SI_PARTICLES, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_siParticles2, lists.siParticles, sizeof(particleStruct)*config.SI_PARTICLES, cudaMemcpyHostToDevice);
 		d_calculateForce_Si<<<grid,block>>>(config.MAX_SI_NEIGHBORS, config.MAX_XE_NEIGHBORS, d_siParticles, d_siParticles2, d_xeParticles, config.SI_PARTICLES, config.XE_PARTICLES, config.USE_NEIGHBOR_LISTS, config.useLennardJonesPotentialForSi);
+		cudaMemcpy(lists.siParticles, d_siParticles, sizeof(particleStruct)*config.SI_PARTICLES, cudaMemcpyDeviceToHost);
+
+		if(!first)
+		{
+			elapsed = ((clock()-t0)/CLOCKS_PER_SEC)*1000.0;
+			cout<<"Si: "<<elapsed<<endl;
+			averageTimeSi += elapsed;
+		}
 
 		// wait until tasks are completed
 		cudaDeviceSynchronize();
@@ -280,7 +279,22 @@ void calculateForces(bool first)
 			fprintf(stderr, "ERROR: %s \n", cudaGetErrorString(error));
 		}
 
+		if(!first)
+		{
+			t0 = clock();
+		}
+
+		cudaMemcpy(d_xeParticles, lists.xeParticles, sizeof(particleStruct)*config.XE_PARTICLES, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_xeParticles2, lists.xeParticles, sizeof(particleStruct)*config.XE_PARTICLES, cudaMemcpyHostToDevice);
 		d_calculateForce_Xe<<<grid,block>>>(config.MAX_SI_NEIGHBORS, config.MAX_XE_NEIGHBORS, d_xeParticles, d_xeParticles2, d_siParticles, config.SI_PARTICLES, config.XE_PARTICLES, config.USE_NEIGHBOR_LISTS);
+		cudaMemcpy(lists.xeParticles, d_xeParticles, sizeof(particleStruct)*config.XE_PARTICLES, cudaMemcpyDeviceToHost);
+
+		if(!first)
+		{
+			elapsed = ((clock()-t0)/CLOCKS_PER_SEC)*1000.0;
+			cout<<"Xe: "<<elapsed<<endl;
+			averageTimeXe += elapsed;
+		}
 
 		cudaDeviceSynchronize();
 		// check for errors
@@ -288,10 +302,7 @@ void calculateForces(bool first)
 		if (error != cudaSuccess) 
 		{
 			fprintf(stderr, "ERROR: %s \n", cudaGetErrorString(error));
-		}
-	
-		cudaMemcpy(lists.siParticles, d_siParticles, sizeof(particleStruct)*config.SI_PARTICLES, cudaMemcpyDeviceToHost);
-		cudaMemcpy(lists.xeParticles, d_xeParticles, sizeof(particleStruct)*config.XE_PARTICLES, cudaMemcpyDeviceToHost);
+		}	
 //////////////////////////////////////////////////CUDA
 	}
 }
@@ -305,70 +316,74 @@ void calculatePositions()
 
 	if(config.SI_PARTICLES > 0)
 	{
-//		if(!config.USE_GPU)
-//		{
-			t0 = clock();
+		if(!config.USE_GPU)
+		{
 			predict(lists.siParticles, config.SI_PARTICLES, config.TIMESTEPS);
-			elapsed = clock()-t0;
-			cout<<"predict si: "<<elapsed<<endl;
-//		}
-//		else
-//		{
-//			cudaMemcpy(d_siParticles, lists.siParticles, sizeof(particleStruct)*config.SI_PARTICLES, cudaMemcpyHostToDevice);
-//			d_predict<<<(config.SI_PARTICLES/siThreadsPerBlock)+1,siThreadsPerBlock>>>(d_siParticles, config.SI_PARTICLES, config.TIMESTEPS);
-//			cudaMemcpy(lists.siParticles, d_siParticles, sizeof(particleStruct)*config.SI_PARTICLES, cudaMemcpyDeviceToHost);
-//		}
+		}
+		else
+		{
+			cudaMemcpy(d_siParticles, lists.siParticles, sizeof(particleStruct)*config.SI_PARTICLES, cudaMemcpyHostToDevice);
+			d_predict<<<(config.SI_PARTICLES/siThreadsPerBlock)+1,siThreadsPerBlock>>>(d_siParticles, config.SI_PARTICLES, config.TIMESTEPS);
+			cudaMemcpy(lists.siParticles, d_siParticles, sizeof(particleStruct)*config.SI_PARTICLES, cudaMemcpyDeviceToHost);
+		}
 	}
 	if(config.XE_PARTICLES > 0)
 	{
-//		if(!config.USE_GPU)
-//		{
+		if(!config.USE_GPU)
+		{
 			t0 = clock();
 			predict(lists.xeParticles, config.XE_PARTICLES, config.TIMESTEPS);
-			elapsed = clock()-t0;
+			elapsed = (((double)(clock()-t0))/(((double)(CLOCKS_PER_SEC))))*1000.0;
 			cout<<"predict xe: "<<elapsed<<endl;
-//		}
-//		else
-//		{
-//			cudaMemcpy(d_xeParticles, lists.xeParticles, sizeof(particleStruct)*config.XE_PARTICLES, cudaMemcpyHostToDevice);
-//			d_predict<<<(config.SI_PARTICLES/xeThreadsPerBlock)+1,xeThreadsPerBlock>>>(d_xeParticles, config.XE_PARTICLES, config.TIMESTEPS);
-//			cudaMemcpy(lists.xeParticles, d_xeParticles, sizeof(particleStruct)*config.XE_PARTICLES, cudaMemcpyDeviceToHost);
-//		}
+			averageTimePredict += elapsed;
+		}
+		else
+		{
+			t0 = clock();
+			cudaMemcpy(d_xeParticles, lists.xeParticles, sizeof(particleStruct)*config.XE_PARTICLES, cudaMemcpyHostToDevice);
+			d_predict<<<(config.SI_PARTICLES/xeThreadsPerBlock)+1,xeThreadsPerBlock>>>(d_xeParticles, config.XE_PARTICLES, config.TIMESTEPS);
+			cudaMemcpy(lists.xeParticles, d_xeParticles, sizeof(particleStruct)*config.XE_PARTICLES, cudaMemcpyDeviceToHost);
+			elapsed = (((double)(clock()-t0))/(((double)(CLOCKS_PER_SEC))))*1000.0;
+			cout<<"predict xe: "<<elapsed<<endl;
+			averageTimePredict += elapsed;
+		}
 	}
 
 	calculateForces(false);
 
 	if(config.SI_PARTICLES > 0)
-	{
-//		if(!config.USE_GPU)
-//		{
-			t0 = clock();
+		{
+		if(!config.USE_GPU)
+		{
 			correct(lists.siParticles, config.TIMESTEPS, config.SI_PARTICLES, SiMass);
-			elapsed = clock()-t0;
-			cout<<"correct si: "<<elapsed<<endl;
-//		}
-//		else
-//		{
-//			cudaMemcpy(d_siParticles, lists.siParticles, sizeof(particleStruct)*config.SI_PARTICLES, cudaMemcpyHostToDevice);
-//			d_correct<<<(config.SI_PARTICLES/siThreadsPerBlock)+1,siThreadsPerBlock>>>(d_siParticles, config.TIMESTEPS, config.SI_PARTICLES, SiMass);
-//			cudaMemcpy(lists.siParticles, d_siParticles, sizeof(particleStruct)*config.SI_PARTICLES, cudaMemcpyDeviceToHost);
-//		}
+		}
+		else
+		{
+			cudaMemcpy(d_siParticles, lists.siParticles, sizeof(particleStruct)*config.SI_PARTICLES, cudaMemcpyHostToDevice);
+			d_correct<<<(config.SI_PARTICLES/siThreadsPerBlock)+1,siThreadsPerBlock>>>(d_siParticles, config.TIMESTEPS, config.SI_PARTICLES, SiMass);
+			cudaMemcpy(lists.siParticles, d_siParticles, sizeof(particleStruct)*config.SI_PARTICLES, cudaMemcpyDeviceToHost);
+		}
 	}
 	if(config.XE_PARTICLES > 0)
 	{
-//		if(!config.USE_GPU)
-//		{
+		if(!config.USE_GPU)
+		{
 			t0 = clock();
 			correct(lists.xeParticles, config.TIMESTEPS, config.XE_PARTICLES, XeMass);
-			elapsed = clock()-t0;
+			elapsed = (((double)(clock()-t0))/(((double)(CLOCKS_PER_SEC))))*1000.0;
 			cout<<"correct xe: "<<elapsed<<endl;
-//		}
-//		else
-//		{
-//			cudaMemcpy(d_xeParticles, lists.xeParticles, sizeof(particleStruct)*config.XE_PARTICLES, cudaMemcpyHostToDevice);
-//			d_correct<<<(config.SI_PARTICLES/xeThreadsPerBlock)+10,xeThreadsPerBlock>>>(d_xeParticles, config.TIMESTEPS, config.XE_PARTICLES, XeMass);			
-//			cudaMemcpy(lists.xeParticles, d_xeParticles, sizeof(particleStruct)*config.XE_PARTICLES, cudaMemcpyDeviceToHost);
-//		}
+			averageTimeCorrect += elapsed;
+		}
+		else
+		{
+			t0 = clock();
+			cudaMemcpy(d_xeParticles, lists.xeParticles, sizeof(particleStruct)*config.XE_PARTICLES, cudaMemcpyHostToDevice);
+			d_correct<<<(config.SI_PARTICLES/xeThreadsPerBlock)+10,xeThreadsPerBlock>>>(d_xeParticles, config.TIMESTEPS, config.XE_PARTICLES, XeMass);			
+			cudaMemcpy(lists.xeParticles, d_xeParticles, sizeof(particleStruct)*config.XE_PARTICLES, cudaMemcpyDeviceToHost);
+			elapsed = (((double)(clock()-t0))/(((double)(CLOCKS_PER_SEC))))*1000.0;
+			cout<<"correct xe: "<<elapsed<<endl;
+			averageTimeCorrect += elapsed;
+		}
 	}
 
 	iterationNum++;
@@ -378,7 +393,6 @@ void debugCalculations()
 {
 	if(debugSi)
 	{
-//		cout<<"SI: "<<endl<<endl;
 		double vP = 0.0;
 		double vK = 0.0;
 		real3 iPosition;
@@ -473,7 +487,6 @@ void debugCalculations()
 
 	if(debugXe)
 	{
-//		cout<<"XE: "<<endl<<endl;
 		double vP = 0.0;
 		double vK = 0.0;
 		real3 iPosition;

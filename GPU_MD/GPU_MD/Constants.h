@@ -48,7 +48,8 @@
 #define rb 8.314e-7; // used for temperature
 
 // GPU configurations
+#define blocks 1000
 #define siThreadsPerBlock 256
-#define xeThreadsPerBlock 640
+#define xeThreadsPerBlock 256
 
 #endif	//CONSTANTS_H_
