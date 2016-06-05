@@ -137,8 +137,8 @@ void calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS,
 
 		if(USE_NEIGHBOR_LISTS)
 		{
-			delete [] siNeigborsPositions;
-			delete [] xeNeigborsPositions;
+			delete[] siNeigborsPositions;
+			delete[] xeNeigborsPositions;
 		}
 	}
 }
@@ -219,8 +219,8 @@ void calculateForce_Xe(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruc
 
 		if(USE_NEIGHBOR_LISTS)
 		{
-			delete [] siNeigborsPositions;
-			delete [] xeNeigborsPositions;
+			delete[] siNeigborsPositions;
+			delete[] xeNeigborsPositions;
 		}
 	}
 }

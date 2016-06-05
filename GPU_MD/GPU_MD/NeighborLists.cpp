@@ -297,9 +297,9 @@ void buildNeighbors(particleStruct *particles, particleStruct *secondParticles, 
 		}
 	}	
 
-	delete [] numOfParticlesInCell;
-	delete [] bucketList;
-	delete [] list;
+	delete[] numOfParticlesInCell;
+	delete[] bucketList;
+	delete[] list;
 }
 
 /*

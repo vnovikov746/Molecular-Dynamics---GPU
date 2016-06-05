@@ -565,9 +565,9 @@ void Animate(int argc, char *argv[])
 	Initialize();
 	glutDisplayFunc(Draw);
 	glutMainLoop();
-	delete [] xp;
-	delete [] yp;
-	delete [] zp;
+	delete[] xp;
+	delete[] yp;
+	delete[] zp;
 }
 
 void Initialize()
