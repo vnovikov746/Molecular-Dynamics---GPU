@@ -5,7 +5,10 @@
 #include "Calculations.h"
 
 //-------------------------- calculate Force Si ------------------------------//
-void calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruct* siParticles, particleStruct* xeParticles, int numOfSi, int numOfXe, bool USE_NEIGHBOR_LISTS, bool useLennardJonesPotentialForSi)
+void calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, 
+	particleStruct* siParticles, particleStruct* xeParticles, 
+	int numOfSi, int numOfXe, bool USE_NEIGHBOR_LISTS, 
+	bool useLennardJonesPotentialForSi)
 {
 	for(int i = 0; i < numOfSi; i++)
 	{
@@ -57,7 +60,7 @@ void calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruc
 						jPosition = siNeigborsPositions[j];
 
 					r_ij = distance2(iPosition, jPosition);	
-		//			if(r_ij/sigma_Si < 1.8)
+					if (r_ij/sigma_Si < a_Si)
 					{
 						siParticles[i].force.x += (iPosition.x-jPosition.x)*lennardJonesForce(r_ij,sigma_Si,epsilon_Si);
 						siParticles[i].force.y += (iPosition.y-jPosition.y)*lennardJonesForce(r_ij,sigma_Si,epsilon_Si);
@@ -116,16 +119,13 @@ void calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruc
 			}
 		}
 
-	/*	for(int j = 0; j < countXe; j++)
+		for(int j = 0; j < countXe; j++)
 		{
-				if(!USE_NEIGHBOR_LISTS)
-					jPosition = xeParticles[j].position;
-				else
-					jPosition = xeNeigborsPositions[j];
+			if(!USE_NEIGHBOR_LISTS)
+				jPosition = xeParticles[j].position;
+			else
+				jPosition = xeNeigborsPositions[j];
 
-			jPosition.x += 0.25*config->SI_LENGTH*space_Si;
-			jPosition.y += 0.25*config->SI_LENGTH*space_Si;
-			jPosition.z += config->SI_HEIGHT+config->LA_SPACE;
 			r_ij = distance2(iPosition, jPosition);
 			if(r_ij/sigma_Si_Xe < a_Si_Xe)
 			{
@@ -133,12 +133,12 @@ void calculateForce_Si(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruc
 				siParticles[i].force.y += ((iPosition.y-jPosition.y)*(lennardJonesForce(r_ij,sigma_Si_Xe,epsilon_Si_Xe)));//-lennardJonesForce(2.5*sigma_Si,sigma_Si_Xe,epsilon_Si_Xe)));
 				siParticles[i].force.z += ((iPosition.z-jPosition.z)*(lennardJonesForce(r_ij,sigma_Si_Xe,epsilon_Si_Xe)));//-lennardJonesForce(2.5*sigma_Si,sigma_Si_Xe,epsilon_Si_Xe)));
 			}
-		}*/
+		}
 
 		if(USE_NEIGHBOR_LISTS)
 		{
-			free(siNeigborsPositions);
-			free(xeNeigborsPositions);
+			delete [] siNeigborsPositions;
+			delete [] xeNeigborsPositions;
 		}
 	}
 }
@@ -201,7 +201,7 @@ void calculateForce_Xe(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruc
 			}
 		}
 
-	/*	for(int j = 0; j < countSi; j++)
+		for(int j = 0; j < countSi; j++)
 		{
 			if(!USE_NEIGHBOR_LISTS)
 				jPosition = siParticles[j].position;
@@ -215,12 +215,12 @@ void calculateForce_Xe(int MAX_SI_NEIGHBORS, int MAX_XE_NEIGHBORS, particleStruc
 				xeParticles[i].force.y += (iPosition.y-jPosition.y)*lennardJonesForce(r_ij,sigma_Si_Xe,epsilon_Si_Xe);
 				xeParticles[i].force.z += (iPosition.z-jPosition.z)*lennardJonesForce(r_ij,sigma_Si_Xe,epsilon_Si_Xe);
 			}
-		}*/
+		}
 
 		if(USE_NEIGHBOR_LISTS)
 		{
-			free(siNeigborsPositions);
-			free(xeNeigborsPositions);
+			delete [] siNeigborsPositions;
+			delete [] xeNeigborsPositions;
 		}
 	}
 }

@@ -7,7 +7,6 @@
 #include "Configurations.h"
 #include "Calculations.h"
 #include "SiPotential.h"
-#include <math.h>
 #include <fstream>
 #include <cuda.h>//cuda
 #include <cuda_runtime.h>//cuda

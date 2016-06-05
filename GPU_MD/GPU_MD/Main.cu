@@ -13,8 +13,8 @@
 #include <stdlib.h>
 #include <crtdbg.h>
 #include "Equi.h"
-#include <math.h>
-#include <glut.h> 
+#include <minmax.h>
+#include <GL/glut.h> 
 #include "DebugPrints.h"
 #include <cuda.h>//cuda
 #include <cuda_runtime.h>//cuda
@@ -565,9 +565,9 @@ void Animate(int argc, char *argv[])
 	Initialize();
 	glutDisplayFunc(Draw);
 	glutMainLoop();
-	free(xp);
-	free(yp);
-	free(zp);
+	delete [] xp;
+	delete [] yp;
+	delete [] zp;
 }
 
 void Initialize()
@@ -599,9 +599,9 @@ void DrawPoints()
 	}
 	for(int i = 0; i < config.XE_PARTICLES; i++, place++)
 	{
-		xp[place] = (lists.xeParticles[i].position.x)+0.25*config.SI_LENGTH*space_Si;
-		yp[place] = (lists.xeParticles[i].position.y)+0.25*config.SI_LENGTH*space_Si;
-		zp[place] = (lists.xeParticles[i].position.z)+config.SI_HEIGHT+config.LA_SPACE;
+		xp[place] = (lists.xeParticles[i].position.x);
+		yp[place] = (lists.xeParticles[i].position.y);
+		zp[place] = (lists.xeParticles[i].position.z);
 	}
 	for(int i = 0; i < config.SI_PARTICLES; i++)
 	{

@@ -121,7 +121,7 @@ int readConfig(string configFilename, configurations *config)
 			else if(line.find("PRINT_GRAPHS") == 0)
 			{
 				pos = line.find_first_of('=');
-				config->PRINT_GRAPHS = atoi(line.substr(pos+1, line.size()).c_str());
+				config->PRINT_GRAPHS = atoi(line.substr(pos+1, line.size()).c_str()) > 0 ? true : false;
 			}
 			else if(line.find("OUT_FOR_GRAPHS") == 0)
 			{
@@ -131,7 +131,7 @@ int readConfig(string configFilename, configurations *config)
 			else if(line.find("USE_GPU") == 0)
 			{
 				pos = line.find_first_of('=');
-				config->USE_GPU = atoi(line.substr(pos+1, line.size()).c_str());
+				config->USE_GPU = atoi(line.substr(pos+1, line.size()).c_str()) > 0 ? true : false;
 			}
 		}
 	}
@@ -266,16 +266,16 @@ int listsDestroy(configurations *config, allLists *lists)
 	{
 		for(int i = 0; i < config->SI_PARTICLES; i++)
 		{
-			free(lists->siParticles[i].siNeighbors);
-			free(lists->siParticles[i].xeNeighbors);
+			delete [] lists->siParticles[i].siNeighbors;
+			delete [] lists->siParticles[i].xeNeighbors;
 		}
 		for(int i = 0; i < config->XE_PARTICLES; i++)
 		{
-			free(lists->xeParticles[i].siNeighbors);
-			free(lists->xeParticles[i].xeNeighbors);
+			delete[] lists->xeParticles[i].siNeighbors;
+			delete[] lists->xeParticles[i].xeNeighbors;
 		}
-		free(lists->siParticles);
-		free(lists->xeParticles);
+		delete[] lists->siParticles;
+		delete[] lists->xeParticles;
 	}
 	catch(exception e)
 	{

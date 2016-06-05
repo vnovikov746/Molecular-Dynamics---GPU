@@ -191,7 +191,7 @@ int writeParticlesInput(configurations *config)
 							}
 							if((movedZ+check3) <= z_size && (movedX+check1) <= x_size && (movedY+check2) <= y_size)
 							{
-								MDinputFile<<"Xe   x="<<movedX*space_Xe/**(space_Xe)+0.25*config->SI_LENGTH*space_Si*/<<"  y="<<movedY*space_Xe/**(space_Xe)+0.25*config->SI_LENGTH*space_Si*/<<"  z="<</*(*/(movedZ)*space_Xe/**(space_Xe))+config->SI_HEIGHT+config->LA_SPACE*/<<"\n";
+								MDinputFile << "Xe   x=" << movedX*space_Xe + 0.25*config->SI_LENGTH*space_Si << "  y=" << movedY*space_Xe + 0.25*config->SI_WIDTH*space_Si << "  z=" << movedZ*space_Xe + config->SI_HEIGHT*space_Si + config->LA_SPACE << "\n";
 								config->XE_PARTICLES++;
 							}
 						}

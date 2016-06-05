@@ -5,7 +5,6 @@
 #include "Structures.h"
 #include "Constants.h"
 #include "Configurations.h"
-#include <math.h>
 #include <fstream>
 #include <cuda.h>//cuda
 #include <cuda_runtime.h>//cuda

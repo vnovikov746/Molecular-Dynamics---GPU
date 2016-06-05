@@ -10,7 +10,6 @@
 #include "Configurations.h"
 #include "LennardJones.h"
 #include "SiPotential.h"
-#include <math.h>
 #include <fstream>
 #include <cuda.h>//cuda
 #include <cuda_runtime.h>//cuda
